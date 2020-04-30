@@ -1,0 +1,364 @@
+---
+title: "Análise de Componentes Principais"
+author: "Rosineide da Paz"
+date: "30/04/2020"
+output: html_document
+---
+\newcommand{\bfX}{\textbf{X}}
+\newcommand{\bfR}{\textbf{R}}
+\newcommand{\bfV}{\textbf{V}}
+\newcommand{\bfr}{\textbf{r}}
+
+```{r include=FALSE}
+if(!require(devtools)) install.packages("devtools");require(devtools) 
+if(!require(ggord)) install_github('fawda123/ggord');library(ggord)
+if(!require(ggbiplot)) install_github("vqv/ggbiplot");require(ggbiplot) 
+if(!require(ggord)) install_github('fawda123/ggord');require(ggord) 
+if(!require(plotly)) install.packages("plotly");require(plotly) 
+if(!require(rgl)) install.packages("rgl");require(rgl) 
+if(!require(factoextra)) install.packages("factoextra");require(factoextra) 
+if(!require(FactoMineR)) install.packages("FactoMineR");require(FactoMineR)
+if(!require(plot3D)) install.packages("plot3D");require(plot3D) 
+
+```
+
+
+
+PCA (do ingles,  $Principal$ $Componets$ $Analysis$) é uma técnica para análise multivariada introduzida por <cite><a href="#Pearson(1901)"> Pearson (1901)</a></cite>, que se tornou popular devido aos avanços tecnologicos ocorridos nos últimos anos. Este método foi desenvolvido por Hotelling (1933) ... , e tem como ideia principal reduzir a dimensionalidade de um conjunto de variáveis  altamente correlacionadas, mantendo grande parte da variabilidade. 
+
+
+<p>A redução do número de variáveis é feita pela obtenção de um novo conjunto de variáveis com a mesma dimensionalidade, obtidas a partir das iniciais por meio de uma combinação linear, em que as novas variáveis, denominadas componentes, são obditas de modo que possam ser ordenadas  por suas variâncias da maior para a menor. Assim, tem-se o primeiro componente retendo a maior parte da variabilidade contida no conjunto de variáveis originais, o segundo componten retém a segunda maior variabilidade e assim por diante, até a n-ésima componte, a qual retém a menor quantidade da variabilidade total. </p>
+
+
+<p> A fim de ilustrar  a técnica, suponha um vetor de p variáveis $\bfX=X_1, X_2, \cdots, X_p$. Se $p=2$, estuar a estrutura de covariâncias ou a correlação entre as variáveis torna-se uma tarefa simples. Veja um exemplo com dados coletados a partir de uma planta de cimento, em que são consideradas $p=5$ variáveis.
+</p>
+
+
+```{r include=FALSE}
+
+julho2019 <- read.csv("Dados2/2019-julho.csv")
+
+agosto2019 <- read.csv("Dados2/2019-agosto.csv")
+
+setembro2019 <- read.csv("Dados2/2019-setembro.csv")
+
+outubro2019 <- read.csv("Dados2/2019-outubro.csv")
+
+novembro2019 <- read.csv("Dados2/2019-novembro.csv")
+
+dezembro2019 <- read.csv("Dados2/2019-dezembro.csv")
+
+
+tabl=rbind(agosto2019,setembro2019,outubro2019,novembro2019,dezembro2019)
+attach(tabl)
+x1=total_feed_ton_h_pv
+
+tab=tabl[x1>5,-(1:2)]
+df=na.omit(tab)
+
+
+
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
+res <- cor(df)
+round(res, 2)
+```
+
+
+
+
+```{r include=FALSE}
+attach(tabl)
+names(tabl)
+x1=total_feed_ton_h_pv
+x2=hopper_level_mg_m3_pv
+x3=mill_in_temp_c_pv
+x4=grinding_pressure_bar_pv
+x5=fly_ash_2_ton_h_pv 
+x6=gypsum_ton_h_pv
+x7=clinker_ton_h_pv
+x8=limestone_ton_h_pv
+x9=slag_ton_h_pv
+x10=mill_injection_water_perc_sp 
+
+Type=cement_type_cpii_bool_pv
+
+y1=mill_motor_pwr_kw_pv
+y2=mill_vibration_mm_s_pv
+
+
+
+df1=data.frame(cbind(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+
+
+
+
+
+```
+
+
+
+```{r include=FALSE}
+ind=which(x1>5 & x1<110 & x9>1 & x7>1)
+df2=cbind(y1,df1)
+df2=na.omit(df2)
+df=df2[ind,]
+rownames(df) <- 1 : length(rownames(df))
+```
+
+
+
+
+
+```{r}
+names(df)=c("Resp","Total Feed","Hoper","Temp","Grind","FlyA2","Gypsum","Clinker","Limest","Slang", "Iwater")
+head(df)
+```
+
+```{r include=FALSE}
+
+salt=seq(1,nrow(df),10)
+
+dfn=df[salt,]
+
+rownames(dfn) <- 1 : length(rownames(dfn))
+attach(dfn)
+```
+
+
+
+<p> Suponha que se queira estudar a relação entre as variáveis: $X_1=$"Clinker"  e $X_2=$"Slang", usando as observações desse conjunto de dados. Neste caso, a vizualizar graficamente o comportamento das variáveis no conjunto de dados é simples, basta construir um grafico de dispersão simples.
+
+
+</p>
+
+
+
+
+
+
+
+
+```{r}
+plot(Clinker,Slang)
+```
+
+
+ 
+<p>
+A partir do grafico pode-se notar uma tendencia linear, sugerindo que uma reta poderia ser adequada para modelar o relacionamento entre $X_1$ e $X_2$. Suponha agora que se queira estudar o comportamento em conjunto de $X_1$, $X_2$
+e $X_3$="Limest". Neste caso ainda é possível visualizar o comportamento em conjunto das três variáveis em um gráfico.
+</p>
+
+ 
+
+```{r}
+plot_ly(type = "scatter3d",
+        mode = "markers",
+        swiss, x = Clinker, y = Slang, z = Limest, 
+         size = 4)
+```
+
+<p> A visualização do comportamente das variáveis em um conjunto de dados não é possível de feita usando gráficos de dispersão comuns. Assim, uma exploração desses reslacionamentos pode ser feita fazendo uso de tecnicas como a análise de componentes principais. 
+</p>
+
+<p> Com o propósito de ilustrar essa tecnica, considere o vetor de variáveis $\bfX=X_1, X_2, X_3$, conforme visto anteriormente, $p=3$. Desta forma, tem-se $1/2p(p-1)=6$ elementos distintos na matriz de variâncias e covariâncias, assim como seis elementos disintos na matriz de correlação. Esta última par os dados apresentados anteriormente, é mostrada a seguir.
+
+</p>
+
+```{r}
+
+X=cbind(Clinker,Slang,  Limest)
+V = cor(X)
+V
+```
+
+
+A matriz de convariâncias irá apresentar em sua diagonal as variâncias amostrais das variáveis $X_1, X_2, X_3$ e fora da diagonal as covariâncias entre cada par delas, enquanto a matriz de correlação apresenta as correlações entre cada par fora da diagonal e uns na diagonal. A correlação é uma função das variâncias, e covariâncias, sendo muito útil para facilitar a interpretação. A correlação é um número sempre entre -1 e 1, sendo que valores próximo  dos extremos -1 ou 1 indica forte relação linear entre o par de variáveis, por outro lado, valores de correlação próximos de 0 indicam  relacionamento linear fraco.
+
+
+Agora, o objetivo é obter um "novo" conjunto de variáveis, $Y_1,Y_2,Y_3$, denominadas componentes, utilizando para isso a matriz de covariancias ou a matriz de correlação das variáveis originais. Logo,  cada variável é obtida de modo que  seja uma combinação linear das variáveis iniciais, ou seja:
+
+$$
+\begin{array}{ccc} 
+Y_1&= &r_{11} X_1 + r_{12} X_2  + r_{13} X_3 \\
+Y_2&= &r_{21} X_1 + r_{22} X_2  + r_{23} X_3\\
+Y_3&= &r_{31} X_1 + r_{32} X_2  + r_{33} X_3 \\
+\end{array}
+$$ 
+
+Aqui, 
+
+$$
+\bfR=\left(\begin{array}{ccc} 
+r_{11} &r_{12} & r_{13} \\
+r_{21} & r_{22} & r_{23}\\
+r_{31} & r_{32}& r_{33}  \\
+\end{array}\right)
+$$ 
+é denominada matriz de rotação, obtida de modo que $Y_1,Y_2,Y_3$ sejam ortogonais (independentes) e
+
+
+$$Var(Y_1)  > Var(Y_2)  >  Var(Y_3),$$
+ou seja, as novas variáveis são contruídas com base na maximização das variâncias. Para obter $Y_1$ encontra-se $\bfr_1=(r_{11}, r_{12}, r_{13})$ 
+
+$$\underset{r_1}{\operatorname{argmax}} \left( Var (Y_1) \right)=\underset{r_1}{\operatorname{argmax}} \left( Var (r_{11} X_1 + r_{12} X_2  + r_{13} X_3) \right),$$
+
+ sugeito a restrição 
+$$\bfr_1'\bfr_1=r_{11}^2  + r_{12}^2 +r_{13}^2=1$$
+
+Para ilustrar o objetivo, observe que a ideia é obter $Y_1$ rotacionando o eixo cartesiano de modo que as variáveis obtidas sejam ortogonais. Assim, deve-se obter o primeiro eixo na direção da maior variabilidade no conjunto de dados.
+
+
+
+```{r echo=FALSE}
+ggplot(dfn, aes(x = Limest, y = Slang) ) +
+     geom_point() +
+     geom_smooth(method = "lm", se = FALSE)
+```
+
+
+
+
+
+
+
+
+
+Seja $\bfV$ a matriz de variâncias e covariâncias ou de correlação de $\bfX=X_1, X_2, X_3$
+$$\underset{r_1}{\operatorname{argmax}} \left( Var (r_{11} X_1 + r_{12} X_2  + r_{13} X_3) \right)=\underset{r_1}{\operatorname{argmax}} \left( \bfr_1' \bfV \bfr_1 \right)$$
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+
+
+f.pca <- PCA(X, graph = FALSE)
+
+eig.val <- get_eigenvalue(f.pca)
+fviz_eig(f.pca, addlabels = TRUE, ylim = c(0, 50))
+
+
+
+
+var <- get_pca_var(f.pca)
+
+corrplot(var$cos2, is.corr=FALSE)
+
+
+
+
+
+
+```
+
+
+
+
+
+```{r}
+y2=dfn[,1]
+categ=y2
+
+
+
+categ[which(y2< quantile(y2,0.25))]="A"
+categ[which(y2 >=quantile(y2,0.25) & y2<=quantile(y2,0.75))]="B"
+categ[which(y2>quantile(y2,0.75))]="C"
+
+
+ord <- prcomp(X)
+p <- ggord(ord, categ)
+p
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r eval=FALSE, include=FALSE}
+
+cate=y2
+
+
+cate[which(y2< quantile(y2,0.25))]="red"
+cate[which(y2 >=quantile(y2,0.25) & y2<=quantile(y2,0.75))]="blue"
+cate[which(y2>quantile(y2,0.75))]="green"
+
+
+
+res.pca=PCA(X, graph = FALSE)$ind
+x=as.numeric(res.pca$coord[,1])
+y=as.numeric(res.pca$coord[,2])
+z=as.numeric(res.pca$coord[,3])
+
+
+
+```
+
+
+
+
+```{r}
+library(plotly)
+plot_ly(type = "scatter3d",
+        mode = "markers",
+        swiss, x = x, y = y, z = z, 
+        marker = list(color=cate, size = 4))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+<p><a href="#Pearson(1901)"> Pearson, K. (1901)</a><cite> On lines and planes of closest fit to systems of points
+in space.</cite> Phil. Mag. (6), 2, 559–572.</p>
+
+
+<p> Hotelling, H. (1933).<cite> Analysis of a complex of statistical variables into
+principal components. J. Educ. Psychol., 24, 417–441, 498–520.
+
+<p>Hotelling, H. (1936).<cite> Simplified calculation of principal components.
+Psychometrika, 1, 27–35.
+
+<p>Hotelling, H. (1957).<cite> The relations of the newer multivariate statistical
+methods to factor analysis. Brit. J. Statist. Psychol., 10, 69–79.</p>
+
+
+
+$$
+\left(\begin{array}{cc} 
+Y_1& r_{11} X_1 + r_{12} X_2  + r_{13} X_3 \\
+Y_2& r_{21} X_1 + r_{22} X_2  + r_{23} X_3
+Y_3& r_{31} X_1 + r_{32} X_2  + r_{33} X_3 \\
+\end{array}\right)
+\left(\begin{array}{cc} 
+10 & 0\\ 
+0 & 5
+\end{array}\right)
+$$ 

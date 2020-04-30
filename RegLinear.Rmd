@@ -1,10 +1,10 @@
 ---
 title: "Análise de Regressão"
 output:
-  pdf_document: default
+  html_notebook: default
   html_document:
   word_document: default
-  html_notebook: default
+  pdf_document: default
   df_print: paged
 ---
 
@@ -283,5 +283,4 @@ Teorema $3.1$: Suponha que X é uma matriz $n \times (p+1)$ de $rank$ completo $
 * $rank[I_n - H] = Tr[I_n - H] = n-(p+1) = n-p-1$;
 
 * $HX = X$.
-
 
